@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "functions": {
+    "api/chat.mjs": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    { "source": "/api/chat", "destination": "/api/chat" }
+  ]
+}
