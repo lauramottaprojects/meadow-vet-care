@@ -370,8 +370,7 @@ async function handleQuestion(text){
     typing.remove();
 
     if (aiReply) {
-      // Format AI reply as markdown-like HTML
-      const html = aiReply
+      let html = aiReply
         .replace(/^## (.+)$/gm, '<h3 style="font-family:Fraunces,serif;font-size:1rem;margin:.6rem 0 .2rem">$1</h3>')
         .replace(/^### (.+)$/gm, '<h4 style="font-family:Fraunces,serif;font-size:.9rem;margin:.5rem 0 .1rem;color:#e8b04b">$1</h4>')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -380,7 +379,11 @@ async function handleQuestion(text){
         .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
         .replace(/\n{2,}/g, '</p><p>')
         .replace(/\n/g, '<br>');
-      addBot(`<p>${html}</p>`);
+      // Only wrap in <p> if no block-level tags present
+      if (!/^<(\/?p|h[34]|ul)/i.test(html.trim())) {
+        html = `<p>${html}</p>`;
+      }
+      addBot(html);
     } else {
       // Fallback: keyword search
       const results = searchServices(text);
