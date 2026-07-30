@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Meadow Vet Care — Ask the meadow</title>
-<meta name="description" content="Ask Meadow Vet Care about our services, prices and offers. Answers come live from the clinic's own list.">
+<meta name="description" content="Ask Meadow Vet Care about services, prices and offers — live from the clinic's own list.">
 <meta name="theme-color" content="#12251b">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,114 +12,55 @@
 <style>
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{
-font-family:"Spline Sans",sans-serif;background:#12251b;color:#f4ecd9;
-overflow:hidden;-webkit-font-smoothing:antialiased
-}
+body{font-family:"Spline Sans",sans-serif;background:#12251b;color:#f4ecd9;overflow:hidden;-webkit-font-smoothing:antialiased}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
-.veil{position:fixed;inset:0;z-index:1;pointer-events:none;
-background:radial-gradient(120% 80% at 50% -10%,transparent 40%,rgba(9,18,13,.55) 100%),
-linear-gradient(180deg,rgba(9,18,13,.3),transparent 30%,rgba(9,18,13,.55))}
-
-.stage{position:relative;z-index:2;height:100dvh;display:flex;flex-direction:column;
-align-items:center;padding:clamp(14px,3vw,30px);gap:clamp(10px,2vh,18px)}
-
-header{width:min(760px,100%);display:flex;align-items:center;gap:14px;opacity:0;animation:fadeUp .9s ease .15s forwards}
-.logo{width:42px;height:42px;flex:0 0 auto}
-h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(1.35rem,3.4vw,2rem);
-margin:0;line-height:1;letter-spacing:-.01em}
+.veil{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(120% 80% at 50% -10%,transparent 40%,rgba(9,18,13,.55) 100%),linear-gradient(180deg,rgba(9,18,13,.3),transparent 30%,rgba(9,18,13,.55))}
+.stage{position:relative;z-index:2;height:100dvh;display:flex;flex-direction:column;align-items:center;padding:clamp(14px,3vw,30px);gap:clamp(10px,2vh,18px)}
+header{width:min(760px,100%);display:flex;align-items:center;gap:14px}
+.logo{width:42px;height:42px;flex:0 0 auto;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
+h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(1.35rem,3.4vw,2rem);margin:0;line-height:1;letter-spacing:-.01em}
 .tagline{font-size:.82rem;color:rgba(244,236,217,.72);margin:.28rem 0 0}
-.live-info{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:.72rem;
-color:rgba(244,236,217,.72);background:rgba(20,38,28,.5);border:1px solid rgba(244,236,217,.16);
-padding:6px 11px;border-radius:999px;backdrop-filter:blur(8px);white-space:nowrap}
+.live-info{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:.72rem;color:rgba(244,236,217,.72);background:rgba(20,38,28,.5);border:1px solid rgba(244,236,217,.16);padding:6px 11px;border-radius:999px;backdrop-filter:blur(8px);white-space:nowrap}
 .dot{width:7px;height:7px;border-radius:50%;background:#e8b04b;box-shadow:0 0 0 0 rgba(232,176,75,.7);animation:pulse 2.4s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,176,75,.6)}70%{box-shadow:0 0 0 8px rgba(232,176,75,0)}100%{box-shadow:0 0 0 0 rgba(232,176,75,0)}}
-
-.panel{width:min(760px,100%);flex:1;min-height:0;display:flex;flex-direction:column;
-background:rgba(20,38,28,.52);border:1px solid rgba(244,236,217,.16);border-radius:22px;
-backdrop-filter:blur(18px) saturate(140%);box-shadow:0 30px 80px -30px rgba(0,0,0,.7),inset 0 1px 0 rgba(244,236,217,.08);
-overflow:hidden;opacity:0;transform:translateY(18px);animation:slideUp .9s ease .35s forwards}
-@keyframes slideUp{to{opacity:1;transform:none}}
-@keyframes fadeUp{to{opacity:1}}
-
+.panel{width:min(760px,100%);flex:1;min-height:0;display:flex;flex-direction:column;background:rgba(20,38,28,.52);border:1px solid rgba(244,236,217,.16);border-radius:22px;backdrop-filter:blur(18px) saturate(140%);box-shadow:0 30px 80px -30px rgba(0,0,0,.7),inset 0 1px 0 rgba(244,236,217,.08);overflow:hidden}
 .scroll{flex:1;min-height:0;overflow-y:auto;padding:clamp(16px,2.4vw,26px);scroll-behavior:smooth}
 .scroll::-webkit-scrollbar{width:9px}
 .scroll::-webkit-scrollbar-thumb{background:rgba(244,236,217,.16);border-radius:99px}
-
 .msg{max-width:88%;margin:0 0 16px;line-height:1.5;font-size:.95rem;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
-.msg.user{margin-left:auto;background:linear-gradient(180deg,#3f6b4a,#345c3d);color:#f4ecd9;
-padding:11px 15px;border-radius:16px 16px 4px 16px;box-shadow:0 6px 18px -8px rgba(0,0,0,.6)}
+.msg.user{margin-left:auto;background:linear-gradient(180deg,#3f6b4a,#345c3d);color:#f4ecd9;padding:11px 15px;border-radius:16px 16px 4px 16px;box-shadow:0 6px 18px -8px rgba(0,0,0,.6)}
 .msg.bot{color:#f4ecd9}
-.msg.bot .who{font-family:"Fraunces",serif;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;
-color:#e8b04b;margin-bottom:5px;font-weight:600}
+.msg.bot .who{font-family:"Fraunces",serif;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:#e8b04b;margin-bottom:5px;font-weight:600}
 .msg.bot p{margin:.1rem 0 .55rem}
 .msg.bot strong{color:#fff;font-weight:600}
 .msg.bot ul{margin:.2rem 0 .6rem;padding-left:1.1rem}
 .msg.bot li{margin:.15rem 0}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-
 .cards{display:grid;gap:9px;margin:.4rem 0 .2rem}
-.card{background:rgba(9,18,13,.34);border:1px solid rgba(244,236,217,.16);
-border-left:3px solid #7fae74;border-radius:12px;padding:11px 13px;
-animation:grow .55s cubic-bezier(.2,.9,.2,1) both}
+.card{background:rgba(9,18,13,.34);border:1px solid rgba(244,236,217,.16);border-left:3px solid #7fae74;border-radius:12px;padding:11px 13px;animation:grow .55s cubic-bezier(.2,.9,.2,1) both}
 .card.offer{border-left-color:#e8b04b}
 @keyframes grow{from{opacity:0;transform:translateY(10px) scaleY(.86)}to{opacity:1;transform:none}}
-.card .name{font-family:"Fraunces",serif;font-weight:600;font-size:.98rem;color:#f4ecd9;
-display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.card .name{font-family:"Fraunces",serif;font-weight:600;font-size:.98rem;color:#f4ecd9;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
 .card .price{color:#e8b04b;font-weight:600;white-space:nowrap}
 .card .meta{font-size:.78rem;color:rgba(244,236,217,.72);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 12px}
-.card .tag{display:inline-block;margin-top:7px;font-size:.72rem;color:#12251b;
-background:#e8b04b;padding:2px 9px;border-radius:99px;font-weight:600}
-
+.card .tag{display:inline-block;margin-top:7px;font-size:.72rem;color:#12251b;background:#e8b04b;padding:2px 9px;border-radius:99px;font-weight:600}
 .typing{display:inline-flex;gap:5px;align-items:center;color:rgba(244,236,217,.72);font-size:.9rem}
 .typing i{width:6px;height:6px;border-radius:50%;background:#7fae74;display:inline-block;animation:bob 1s infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
 @keyframes bob{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
-
 .chips{display:flex;gap:8px;flex-wrap:wrap;padding:4px clamp(16px,2.4vw,26px) 0}
-.chip{font:inherit;font-size:.82rem;color:#f4ecd9;background:rgba(9,18,13,.3);
-border:1px solid rgba(244,236,217,.16);padding:8px 13px;border-radius:99px;cursor:pointer;
-transition:all .18s;white-space:nowrap}
+.chip{font:inherit;font-size:.82rem;color:#f4ecd9;background:rgba(9,18,13,.3);border:1px solid rgba(244,236,217,.16);padding:8px 13px;border-radius:99px;cursor:pointer;transition:all .18s;white-space:nowrap}
 .chip:hover{background:rgba(232,176,75,.14);border-color:rgba(232,176,75,.5)}
 .chip:focus-visible{outline:2px solid #e8b04b;outline-offset:2px}
-.chip.geo{border-color:rgba(232,176,75,.35)}
-.chip.geo.on{background:rgba(122,168,116,.22);border-color:rgba(122,168,116,.6)}
-
-.est{margin-top:12px;border:1px solid rgba(232,176,75,.34);border-radius:14px;overflow:hidden;
-background:linear-gradient(180deg,rgba(232,176,75,.09),rgba(9,18,13,.28))}
-.est-h{font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:#e8b04b;
-padding:10px 14px 8px;border-bottom:1px solid rgba(244,236,217,.1);font-weight:600}
-.est-r{display:flex;justify-content:space-between;gap:14px;align-items:baseline;
-padding:9px 14px;border-bottom:1px solid rgba(244,236,217,.06);font-size:.86rem}
-.est-r.opt{opacity:.72}
-.est-n{display:flex;flex-direction:column;gap:2px}
-.est-n b{font-weight:600}
-.est-n em{font-style:normal;font-size:.72rem;color:rgba(244,236,217,.72);opacity:.7}
-.est-p{white-space:nowrap;font-weight:600}
-.est-p s{color:rgba(244,236,217,.72);font-weight:400;opacity:.6;margin-right:4px}
-.est-off{font-size:.66rem;color:#7fae74;border:1px solid rgba(122,168,116,.4);border-radius:999px;padding:1px 7px;margin-top:2px}
-.est-opt{font-size:.6rem;color:rgba(244,236,217,.72);border:1px solid rgba(244,236,217,.22);border-radius:999px;padding:1px 6px;margin-left:7px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-.est-t{display:flex;justify-content:space-between;padding:12px 14px;font-weight:700;font-size:.98rem;background:rgba(232,176,75,.1)}
-.est-t span:last-child{color:#e8b04b}
-.est-s{padding:0 14px 8px;font-size:.74rem;color:#7fae74}
-.est-note{padding:9px 14px 12px;font-size:.7rem;color:rgba(244,236,217,.72);line-height:1.45;border-top:1px solid rgba(244,236,217,.07)}
-
-form.bar{display:flex;gap:10px;padding:clamp(12px,2vw,18px) clamp(16px,2.4vw,26px);
-border-top:1px solid rgba(244,236,217,.16);background:rgba(9,18,13,.22)}
-.bar input{flex:1;font:inherit;font-size:.95rem;color:#f4ecd9;background:rgba(9,18,13,.4);
-border:1px solid rgba(244,236,217,.16);border-radius:13px;padding:12px 15px;outline:none;transition:border-color .2s}
+form.bar{display:flex;gap:10px;padding:clamp(12px,2vw,18px) clamp(16px,2.4vw,26px);border-top:1px solid rgba(244,236,217,.16);background:rgba(9,18,13,.22)}
+.bar input{flex:1;font:inherit;font-size:.95rem;color:#f4ecd9;background:rgba(9,18,13,.4);border:1px solid rgba(244,236,217,.16);border-radius:13px;padding:12px 15px;outline:none;transition:border-color .2s}
 .bar input::placeholder{color:rgba(244,236,217,.4)}
 .bar input:focus{border-color:#e8b04b;box-shadow:0 0 0 3px rgba(232,176,75,.18)}
-.bar button{font:inherit;font-weight:600;color:#12251b;background:#e8b04b;border:none;
-border-radius:13px;padding:0 18px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:7px}
-.bar button:hover{filter:brightness(1.06)}
-.bar button:active{transform:scale(.96)}
+.bar button{font:inherit;font-weight:600;color:#12251b;background:#e8b04b;border:none;border-radius:13px;padding:0 18px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:7px}
+.bar button:hover{filter:brightness(1.06)}.bar button:active{transform:scale(.96)}
 .bar button:disabled{opacity:.5;cursor:default}
-
-footer{width:min(760px,100%);text-align:center;font-size:.72rem;color:rgba(244,236,217,.5);opacity:0;animation:fadeUp .9s ease .55s forwards}
-footer b{color:#7fae74;font-weight:600}
-a{color:#e8b04b;text-decoration:none;border-bottom:1px dotted rgba(232,176,75,.5)}
-
+footer{width:min(760px,100%);text-align:center;font-size:.72rem;color:rgba(244,236,217,.5)}
+footer b{color:#7fae74;font-weight:600}a{color:#e8b04b;text-decoration:none;border-bottom:1px dotted rgba(232,176,75,.5)}
 @media(max-width:520px){.msg{max-width:94%}.tagline{display:none}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001s!important;animation-iteration-count:1!important}}
 </style>
@@ -130,150 +71,254 @@ a{color:#e8b04b;text-decoration:none;border-bottom:1px dotted rgba(232,176,75,.5
 
 <div class="stage">
   <header>
-    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
-      <rect width="64" height="64" rx="15" fill="#12251b"/>
-      <path d="M32 51c-1-13-1-24 12-33C43 31 41 44 32 51Z" fill="#E8B04B"/>
-      <path d="M32 51c1-12 1-23-11-31C22 30 24 43 32 51Z" fill="#7fae74"/>
-      <path d="M32 52V33" stroke="#f3ead6" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-    <div>
-      <h1>Meadow Vet Care</h1>
-      <div class="tagline">Dogs · cats · rabbits · small mammals · birds</div>
-    </div>
-    <div class="live-info">
-      <span class="dot"></span><span id="liveCount">live services</span>
-    </div>
+    <svg class="logo" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#12251b"/><path d="M32 51c-1-13-1-24 12-33C43 31 41 44 32 51Z" fill="#E8B04B"/><path d="M32 51c1-12 1-23-11-31C22 30 24 43 32 51Z" fill="#7fae74"/><path d="M32 52V33" stroke="#f3ead6" stroke-width="2" stroke-linecap="round"/></svg>
+    <div><h1>Meadow Vet Care</h1><div class="tagline">Dogs · cats · rabbits · small mammals · birds</div></div>
+    <div class="live-info"><span class="dot"></span><span id="liveCount">loading…</span></div>
   </header>
 
-  <section class="panel" aria-label="Chat">
+  <section class="panel">
     <div class="scroll" id="scroll"></div>
     <div class="chips" id="chips"></div>
     <form class="bar" id="form" autocomplete="off">
-      <input id="input" placeholder="Ask about a service, price, or whether it's safe to walk your dog…" maxlength="300">
+      <input id="input" placeholder="Ask about services, prices, offers…" maxlength="300">
       <button id="send" type="submit">Ask→</button>
     </form>
   </section>
 
-  <footer>
-    Chatting with an <b>AI assistant</b>. Answers from our live services list via
-    <a href="https://meadow-vet-bot.victordelrosal.workers.dev/mcp" target="_blank">Model Context Protocol</a>,
-    with Irish holidays and weather from third-party feeds. General info only,
-    <b>not veterinary advice</b>. If your pet is unwell, contact a vet immediately.
-    <br>A fictional clinic, built as a teaching demo.
-  </footer>
+  <footer>Answers from the clinic's <b>live services list</b>. General info only, <b>not veterinary advice</b>. If your pet is unwell, contact a vet immediately. <br>A fictional clinic, built as a teaching demo.</footer>
 </div>
 
 <script>
 /* ── meadow WebGL shader ── */
-(function(){
-  const cv=document.getElementById("bg"),gl=cv.getContext("webgl",{antialias:false,powerPreference:"low-power"});
-  if(!gl){document.body.style.background="linear-gradient(180deg,#2b3d22,#12251b)";return}
-  const vs="attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}",
-       fs="precision highp float;uniform vec2 R;uniform float T;"
-        +"float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}"
-        +"float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}"
-        +"float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p*=2.02;a*=.5;}return v;}"
-        +"void main(){vec2 uv=gl_FragCoord.xy/R.xy;float y=uv.y;"
-        +"vec3 sky=mix(vec3(.55,.62,.42),vec3(.95,.86,.62),pow(y,1.3));"
-        +"float sun=exp(-6.*length((uv-vec2(.34,.86))*vec2(1.,1.3)));sky+=vec3(1.,.82,.5)*sun*.6;"
-        +"float wind=fbm(vec2(uv.x*3.-T*.06,uv.y*7.+fbm(vec2(uv.x*4.,T*.05))));"
-        +"float blades=fbm(vec2(uv.x*22.-T*.03,uv.y*3.))*.5;"
-        +"vec3 grass=mix(vec3(.1,.2,.13),vec3(.3,.48,.28),wind);"
-        +"grass=mix(grass,vec3(.42,.56,.3),blades*smoothstep(.0,.5,1.-y));"
-        +"grass+=vec3(.55,.42,.14)*pow(wind,3.)*smoothstep(.55,.0,y)*.5;"
-        +"float horizon=smoothstep(.66,.4,y+(fbm(vec2(uv.x*3.,9.))-.5)*.05);"
-        +"vec3 col=mix(sky,grass,horizon);"
-        +"col+=vec3(.9,.8,.6)*fbm(vec2(uv.x*2.+T*.02,uv.y*2.))*.05*(1.-horizon);"
-        +"col-=h(gl_FragCoord.xy+T)*.03;col*=1.-.25*pow(length(uv-.5),2.);"
-        +"gl_FragColor=vec4(col,1.);}";
-  function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o;}
-  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));
-  gl.linkProgram(pr);gl.useProgram(pr);
-  const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
-  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
-  const lp=gl.getAttribLocation(pr,"p");gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
-  let uR=gl.getUniformLocation(pr,"R"),uT=gl.getUniformLocation(pr,"T");
-  const dpr=Math.min(devicePixelRatio||1,1.5);
-  function sz(){cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;gl.viewport(0,0,cv.width,cv.height);gl.uniform2f(uR,cv.width,cv.height)}
-  addEventListener("resize",sz);sz();
-  (function loop(t){gl.uniform1f(uT,t*.001);gl.drawArrays(gl.TRIANGLES,0,3);raf=requestAnimationFrame(loop)})(0);
-})();
+(function(){const cv=document.getElementById("bg"),gl=cv.getContext("webgl",{antialias:false,powerPreference:"low-power"});
+if(!gl){document.body.style.background="linear-gradient(180deg,#2b3d22,#12251b)";return}
+const vs="attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}",
+fs="precision highp float;uniform vec2 R;uniform float T;float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}"
++"float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}"
++"float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p*=2.02;a*=.5;}return v;}"
++"void main(){vec2 uv=gl_FragCoord.xy/R.xy;float y=uv.y;vec3 sky=mix(vec3(.55,.62,.42),vec3(.95,.86,.62),pow(y,1.3));"
++"float sun=exp(-6.*length((uv-vec2(.34,.86))*vec2(1.,1.3)));sky+=vec3(1.,.82,.5)*sun*.6;"
++"float wind=fbm(vec2(uv.x*3.-T*.06,uv.y*7.+fbm(vec2(uv.x*4.,T*.05))));"
++"float blades=fbm(vec2(uv.x*22.-T*.03,uv.y*3.))*.5;vec3 grass=mix(vec3(.1,.2,.13),vec3(.3,.48,.28),wind);"
++"grass=mix(grass,vec3(.42,.56,.3),blades*smoothstep(.0,.5,1.-y));grass+=vec3(.55,.42,.14)*pow(wind,3.)*smoothstep(.55,.0,y)*.5;"
++"float horizon=smoothstep(.66,.4,y+(fbm(vec2(uv.x*3.,9.))-.5)*.05);vec3 col=mix(sky,grass,horizon);"
++"col+=vec3(.9,.8,.6)*fbm(vec2(uv.x*2.+T*.02,uv.y*2.))*.05*(1.-horizon);col-=h(gl_FragCoord.xy+T)*.03;col*=1.-.25*pow(length(uv-.5),2.);"
++"gl_FragColor=vec4(col,1.);}";
+function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o;}
+const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));
+gl.linkProgram(pr);gl.useProgram(pr);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+const lp=gl.getAttribLocation(pr,"p");gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+let uR=gl.getUniformLocation(pr,"R"),uT=gl.getUniformLocation(pr,"T");
+const dpr=Math.min(devicePixelRatio||1,1.5);
+function sz(){cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;gl.viewport(0,0,cv.width,cv.height);gl.uniform2f(uR,cv.width,cv.height)}
+addEventListener("resize",sz);sz();
+(function loop(t){gl.uniform1f(uT,t*.001);gl.drawArrays(gl.TRIANGLES,0,3);requestAnimationFrame(loop)})(0)})();
 
-/* ── chat ── */
-const API="https://meadow-vet-bot.victordelrosal.workers.dev/";
+/* ── data ── */
+const CSV_URL="https://docs.google.com/spreadsheets/d/1JhSODtviGHzXru6Eb5MhfXfVIF5vtJk3pclzzv7j2l4/export?format=csv&gid=1277715587";
+let services=[];
+
+const SPECIES_MAP={dog:"Dog",dogs:"Dog",cat:"Cat",cats:"Cat",rabbit:"Rabbit",rabbits:"Rabbit",bunny:"Rabbit",bird:"Bird",birds:"Bird","small mammal":"Small mammal","small mammals":"Small mammal","small pet":"Small mammal","guinea pig":"Small mammal","hamster":"Small mammal","rat":"Small mammal"};
+const CAT_MAP={consultation:"Consultation",consult:"Consultation",dental:"Dental",dentist:"Dental",teeth:"Dental",surgery:"Surgery",surgical:"Surgery",operation:"Surgery",operate:"Surgery",vaccination:"Vaccination",vaccine:"Vaccination",vaccinate:"Vaccination",jab:"Vaccination",shot:"Vaccination",microchip:"Microchip & ID",microchipping:"Microchip & ID",chip:"Microchip & ID",passport:"Microchip & ID",grooming:"Grooming",groom:"Grooming",nail:"Grooming",clipping:"Grooming",emergency:"Emergency",urgent:"Emergency",emergencies:"Emergency",preventive:"Preventive",prevent:"Preventive",checkup:"Preventive","check-up":"Preventive","wellness":"Preventive",nutrition:"Nutrition",diet:"Nutrition",weight:"Nutrition",behaviour:"Behaviour",behavior:"Behaviour",training:"Behaviour",diagnostics:"Diagnostics",diagnostic:"Diagnostics",blood:"Diagnostics",xray:"Diagnostics","x-ray":"Diagnostics",ultrasound:"Diagnostics","end-of-life":"End-of-life","end of life":"End-of-life","quality of life":"End-of-life",euthanasia:"End-of-life"};
+
+async function loadData(){
+  try{
+    const r=await fetch(CSV_URL);const t=await r.text();
+    const lines=t.trim().split("\n").slice(1);
+    services=lines.map(l=>{const c=l.split(",");return{
+      id:c[0]?.trim(),category:c[1]?.trim(),species:c[2]?.trim(),
+      price:+c[3]||0,duration:+c[4]||0,
+      appointment:c[5]?.trim()==="Yes",availability:c[6]?.trim(),
+      slots:+c[7]||0,offer:c[8]?.trim(),name:c[9]?.trim(),
+      desc:c.slice(10).join(",").replace(/^"|"$/g,"").trim()
+    }}).filter(s=>s.id);
+    document.getElementById("liveCount").textContent=services.length+" live services";
+    document.getElementById("input").disabled=false;
+    document.getElementById("send").disabled=false;
+    return true;
+  }catch(e){
+    document.getElementById("liveCount").textContent="offline";
+    return false;
+  }
+}
+
+/* ── chat logic ── */
 const scroll=document.getElementById("scroll"),form=document.getElementById("form"),
       input=document.getElementById("input"),send=document.getElementById("send"),
       chipsEl=document.getElementById("chips");
-const history=[];
-const STARTERS=["What will a new puppy cost in the first year?","How much for my cat's annual check-up?","Is it too hot to walk my dog right now?","Are you open next Monday?"];
 
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-function fmt(t){
-  const blocks=esc(t).trim().split(/\n{2,}/).map(b=>{
-    const lines=b.split("\n");
-    if(lines.every(l=>/^\s*[-*]\s+/.test(l)))
-      return "<ul>"+lines.map(l=>"<li>"+l.replace(/^\s*[-*]\s+/,"")+"</li>").join("")+"</ul>";
-    return "<p>"+b.replace(/\n/g,"<br>")+"</p>";
-  }).join("");
-  return blocks.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");
-}
+
 function cardHTML(s){
-  const price=s.price_eur!=null?"€"+s.price_eur:"";
-  const meta=[];
-  if(s.id)meta.push(s.id);
-  if(s.duration_min)meta.push(s.duration_min+" min");
-  if(s.availability)meta.push(s.availability);
-  meta.push(s.by_appointment?"by appointment":"walk-in ok");
-  const booked=s.slots_this_week===0?`<span style="color:#e8a48b"> · fully booked this week</span>`:` · ${s.slots_this_week} slots this week`;
-  return `<div class="card${s.special_offer?" offer":""}">
-    <div class="name"><span>${esc(s.service)} <span style="color:rgba(244,236,217,.72);font-weight:400;font-size:.8rem">(${esc(s.species)})</span></span><span class="price">${price}</span></div>
+  const price=s.price?"€"+s.price.toLocaleString():"";
+  const meta=[s.id,s.duration?s.duration+" min":"",s.availability,s.appointment?"by appointment":"walk-in ok"].filter(Boolean);
+  const booked=s.slots===0?`<span style="color:#e8a48b"> · fully booked this week</span>`:` · ${s.slots} slots this week`;
+  return `<div class="card${s.offer?" offer":""}">
+    <div class="name"><span>${esc(s.name)} <span style="color:rgba(244,236,217,.72);font-weight:400;font-size:.8rem">(${esc(s.species)})</span></span><span class="price">${price}</span></div>
     <div class="meta">${meta.map(esc).join(" · ")} ${booked}</div>
-    ${s.special_offer?`<span class="tag">${esc(s.special_offer)}</span>`:""}
+    ${s.offer?`<span class="tag">${esc(s.offer)}</span>`:""}
+    ${s.desc?`<div style="font-size:.75rem;color:rgba(244,236,217,.6);margin-top:5px">${esc(s.desc)}</div>`:""}
   </div>`;
 }
-function estimateHTML(e){
-  if(!e||!e.items||!e.items.length)return"";
-  const eur=n=>"€"+Number(n).toFixed(2).replace(/\.00$/,"");
-  const rows=e.items.map(i=>{
-    const label=i.line||i.service;
-    const off=i.saving_eur?`<span class="est-off">${esc(i.special_offer||"offer")}, save ${eur(i.saving_eur)}</span>`:"";
-    const opt=i.optional?`<span class="est-opt">optional</span>`:"";
-    const sub=(i.service&&i.service.toLowerCase()!==label.toLowerCase())?`<em>${esc(i.service)}</em>`:"";
-    const was=i.saving_eur?`<s>${eur(i.list_price_eur)}</s> `:"";
-    return `<div class="est-r${i.optional?" opt":""}"><span class="est-n"><b>${esc(label)}${opt}</b>${sub}${off}</span><span class="est-p">${was}${eur(i.you_pay_eur)}</span></div>`;
-  }).join("");
-  const lo=e.estimate_range_eur?e.estimate_range_eur[0]:e.typical_total_eur;
-  const hi=e.estimate_range_eur?e.estimate_range_eur[1]:e.typical_total_eur;
-  const range=lo===hi?eur(lo):`${eur(lo)} to ${eur(hi)}`;
-  const saved=e.total_savings_from_offers_eur?`<div class="est-s">Offers applied, you save ${eur(e.total_savings_from_offers_eur)}</div>`:"";
-  return `<div class="est"><div class="est-h">Estimated cost${e.scenario?": "+esc(e.scenario):""}</div>${rows}<div class="est-t"><span>Estimate</span><span>${range}</span></div>${saved}<div class="est-note">An estimate from our live price list, not a quote. The vet confirms before anything goes ahead.</div></div>`;
-}
-function addMsg(cls,html){const d=document.createElement("div");d.className="msg "+cls;if(cls==="user")d.textContent=html;else d.innerHTML=`<div class="who">Meadow assistant</div>${html}`;scroll.appendChild(d);scroll.scrollTop=scroll.scrollHeight}
-function addBot(html){addMsg("bot",html)}
 
-async function ask(q){
-  if(!q.trim())return;
-  addMsg("user",q);history.push({role:"user",content:q});
+function addBot(html){
+  const d=document.createElement("div");d.className="msg bot";
+  d.innerHTML=`<div class="who">Meadow assistant</div>${html}`;
+  scroll.appendChild(d);scroll.scrollTop=scroll.scrollHeight;
+}
+
+function addUser(t){
+  const d=document.createElement("div");d.className="msg user";d.textContent=t;
+  scroll.appendChild(d);scroll.scrollTop=scroll.scrollHeight;
+}
+
+function showTyping(){
+  const d=document.createElement("div");d.className="msg bot";d.id="typing";
+  d.innerHTML=`<div class="who">Meadow assistant</div><div class="typing"><i></i><i></i><i></i></div>`;
+  scroll.appendChild(d);scroll.scrollTop=scroll.scrollHeight;return d;
+}
+
+function detectSpecies(text){
+  const l=text.toLowerCase();
+  for(const[k,v]of Object.entries(SPECIES_MAP))if(l.includes(k))return v;
+  return null;
+}
+
+function detectCategory(text){
+  const l=text.toLowerCase();
+  for(const[k,v]of Object.entries(CAT_MAP))if(l.includes(k))return v;
+  return null;
+}
+
+function detectPriceIntent(text){
+  const l=text.toLowerCase();
+  const cheap=/cheapest|cheaper|cheap|lowest|low cost|affordable|budget|least expensive|minimum/i.test(l);
+  const expensive=/most expensive|highest|priciest|dearest|premium|top price/i.test(l);
+  const howMuch=/how much|how much is|how much are|what's the price|what is the price|price of|cost of|what does|cost for/i.test(l);
+  return{cheap,expensive,howMuch};
+}
+
+function detectOfferIntent(text){
+  return /offer|discount|deal|save|saving|special|promo|sale|reduced|bargain/i.test(text);
+}
+
+function searchServices(text){
+  const species=detectSpecies(text);
+  const category=detectCategory(text);
+  const priceIntent=detectPriceIntent(text);
+  const offerIntent=detectOfferIntent(text);
+  const l=text.toLowerCase();
+
+  let results=[...services];
+
+  if(species)results=results.filter(s=>s.species===species);
+  if(category)results=results.filter(s=>s.category===category);
+  if(offerIntent)results=results.filter(s=>s.offer);
+
+  // keyword search in name/desc
+  const keywords=l.split(/\s+/).filter(w=>w.length>3&&!/^(what|does|the|for|you|have|how|much|any|and|with|can|get|some|about|tell|show|list|need|like|want|cost|price|offer|deal|save|euro|eur)$/i.test(w));
+  const covered=new Set([species?.toLowerCase(),category?.toLowerCase(),...(priceIntent.howMuch?["how much"]:[]),...(offerIntent?["offer"]:[])].filter(Boolean));
+  const searchWords=keywords.filter(w=>!covered.has(w));
+
+  if(searchWords.length>0){
+    results=results.filter(s=>{
+      const n=(s.name+" "+s.desc+" "+s.category+" "+s.species).toLowerCase();
+      return searchWords.some(w=>n.includes(w));
+    });
+  }
+
+  if(priceIntent.cheapest&&results.length>1)results.sort((a,b)=>a.price-b.price);
+  if(priceIntent.expensive&&results.length>1)results.sort((a,b)=>b.price-a.price);
+
+  return results.slice(0,12);
+}
+
+function formatResponse(results,text){
+  if(results.length===0){
+    // try broader search
+    const species=detectSpecies(text);
+    const broader=species?services.filter(s=>s.species===species):[];
+    if(broader.length>0){
+      const cats=[...new Set(broader.map(s=>s.category))];
+      return `<p>I couldn't find exactly what you described for <strong>${species}</strong>. We do offer these categories for ${species.toLowerCase()}s:</p>
+      <ul>${cats.map(c=>`<li><strong>${c}</strong> — ask me for details</li>`).join("")}</ul>
+      <p>Would you like me to show you what's available in one of these areas?</p>`;
+    }
+    return `<p>I couldn't find any services matching that. Try asking about a specific animal (dog, cat, rabbit, bird) or category (consultation, dental, vaccination, etc.) and I'll check our live list.</p>`;
+  }
+
+  const species=detectSpecies(text);
+  const category=detectCategory(text);
+  const priceIntent=detectPriceIntent(text);
+  const offerIntent=detectOfferIntent(text);
+
+  let reply="";
+
+  if(priceIntent.howMuch&&results.length===1){
+    const s=results[0];
+    reply=`<p><strong>${esc(s.name)}</strong> for ${esc(s.species)} — <strong>€${s.price.toLocaleString()}</strong>. It takes about ${s.duration} minutes and is ${s.appointment?"by appointment":"walk-in ok"} (${s.availability}).${s.offer?` <span style="color:#e8b04b">Offer: ${esc(s.offer)}</span>`:""}</p>`;
+    return reply;
+  }
+
+  if(priceIntent.cheapest){
+    const s=results[0];
+    reply=`<p>The most affordable option ${category?"in "+category.toLowerCase()+"s":""} ${species?"for "+species.toLowerCase()+"s":""} is <strong>${esc(s.name)}</strong> at <strong>€${s.price.toLocaleString()}</strong>.${s.offer?` <span style="color:#e8b04b">Offer: ${esc(s.offer)}</span>`:""}</p>`;
+  }else if(priceIntent.expensive){
+    const s=results[0];
+    reply=`<p>The premium option ${category?"in "+category.toLowerCase()+"s":""} ${species?"for "+species.toLowerCase()+"s":""} is <strong>${esc(s.name)}</strong> at <strong>€${s.price.toLocaleString()}</strong>.${s.offer?` <span style="color:#e8b04b">Offer: ${esc(s.offer)}</span>`:""}</p>`;
+  }else if(offerIntent&&results.length>0){
+    reply=`<p>Here are our current offers and specials:</p>`;
+  }else if(species&&category){
+    reply=`<p>We have ${results.length} ${category.toLowerCase()} service${results.length>1?"s":""} for ${species.toLowerCase()}s:</p>`;
+  }else if(species){
+    reply=`<p>We offer ${results.length} service${results.length>1?"s":""} for ${species.toLowerCase()}s:</p>`;
+  }else if(category){
+    reply=`<p>Here are our ${category.toLowerCase()} services:</p>`;
+  }else{
+    reply=`<p>Here's what I found matching your question:</p>`;
+  }
+
+  const cards=`<div class="cards">${results.map(cardHTML).join("")}</div>`;
+
+  if(results.length>4){
+    reply+=`<p>Showing ${results.length} results.</p>`;
+  }
+
+  return reply+cards;
+}
+
+async function handleQuestion(text){
+  if(!text.trim())return;
+  addUser(text);
+  const typing=showTyping();
   input.value="";send.disabled=true;input.disabled=true;
-  const tEl=document.createElement("div");tEl.className="msg bot";tEl.innerHTML=`<div class="who">Meadow assistant</div><div class="typing"><i></i><i></i><i></i></div>`;scroll.appendChild(tEl);scroll.scrollTop=scroll.scrollHeight;
-  try{
-    const r=await fetch(API,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({messages:history})});
-    const d=await r.json();
-    if(d.reply){
-      const cards=(d.services&&d.services.length)?`<div class="cards">${d.services.map(cardHTML).join("")}</div>`:"";
-      tEl.innerHTML=`<div class="who">Meadow assistant</div>${fmt(d.reply)}${estimateHTML(d.estimate)}${cards}`;
-      history.push({role:"assistant",content:d.reply});
-    }else tEl.innerHTML=`<div class="who">Meadow assistant</div><p>Sorry, I couldn't reach our services list just now.</p>`;
-  }catch(e){tEl.innerHTML=`<div class="who">Meadow assistant</div><p>Connection hiccup, please try again.</p>`}
-  scroll.scrollTop=scroll.scrollHeight;send.disabled=false;input.disabled=false;input.focus();
+
+  // Small delay to show typing
+  await new Promise(r=>setTimeout(r,400+Math.random()*300));
+
+  const results=searchServices(text);
+  const reply=formatResponse(results,text);
+
+  typing.remove();
+  addBot(reply);
+  send.disabled=false;input.disabled=false;input.focus();
 }
-form.addEventListener("submit",e=>{e.preventDefault();ask(input.value)});
 
-STARTERS.forEach(s=>{const c=document.createElement("button");c.className="chip";c.type="button";c.textContent=s;c.addEventListener("click",()=>ask(s));chipsEl.appendChild(c)});
+form.addEventListener("submit",e=>{e.preventDefault();handleQuestion(input.value)});
 
-fetch(API).then(r=>r.json()).then(d=>{if(d.live_services)document.getElementById("liveCount").textContent=d.live_services+" live services"}).catch(()=>{});
+const STARTERS=["What do you have for dogs?","How much is a cat vaccination?","Any current offers?","Do you do dental cleaning?"];
+STARTERS.forEach(s=>{const c=document.createElement("button");c.className="chip";c.type="button";c.textContent=s;c.addEventListener("click",()=>handleQuestion(s));chipsEl.appendChild(c)});
 
-addBot(`<p>Hello, and welcome to <strong>Meadow Vet Care</strong> 🌿 I can tell you about our services, prices and current offers (pulled live from the clinic's own list), whether we're <strong>open</strong> on a given day (I check the Irish public holidays), and whether it's <strong>safe to walk your dog</strong> in the weather right now. What would you like to know?</p>`);
+/* ── init ── */
+(async function init(){
+  send.disabled=true;input.disabled=true;
+  const ok=await loadData();
+  addBot(ok
+    ?`<p>Hello, and welcome to <strong>Meadow Vet Care</strong> 🌿 I have <strong>${services.length} services</strong> loaded live from the clinic's list. Ask me about prices, offers, or what's available for your pet!</p>`
+    :`<p>Hello, and welcome to <strong>Meadow Vet Care</strong> 🌿 I'm having trouble reaching the services list right now. Please try again in a moment.</p>`);
+  if(ok){send.disabled=false;input.disabled=false;input.focus()}
+})();
 </script>
 </body>
 </html>
