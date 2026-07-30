@@ -143,7 +143,64 @@ async function loadData(){
   }
 }
 
-/* ── chat logic ── */
+/* ── Gemini AI config ── */
+/* RESTRICT your API key by HTTP referrer to your GitHub Pages domain in Google AI Studio. */
+const GEMINI_KEY = "PASTE_YOUR_GEMINI_API_KEY_HERE";
+const GEMINI_MODEL = "gemini-3.1-flash-lite";
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`;
+
+let conv = []; // conversation history
+
+function buildServiceList() {
+  return services.map(s =>
+    `ID:${s.id} | ${s.name} | ${s.species} | €${s.price} | ${s.duration}min | ${s.category} | ${s.offer ? "OFFER: " + s.offer : ""}`
+  ).join("\n");
+}
+
+function buildSystemPrompt() {
+  return `You are the Meadow Vet Care assistant for a modern Irish veterinary clinic. Answer using ONLY the live services below — never invent prices or services.
+
+SPECIES: dogs, cats, rabbits, small mammals, birds.
+HOURS: Mon-Fri 9am-6pm, Sat 9am-1pm, closed Sundays & Irish public holidays.
+EMERGENCY: 24/7 (services MVC-085 to MVC-089).
+BOOKING: Most require appointment. Walk-in: microchipping, nail clipping, flea/tick/worm plans, emergencies.
+
+LIVE SERVICES (${services.length}):
+${buildServiceList()}
+
+RULES: Be concise. Include price, duration. If not in data, say "I don't have that in our current list." Be friendly and professional.`;
+}
+
+async function callGemini(userText) {
+  const sysPrompt = buildSystemPrompt();
+  conv.push({ role: "user", parts: [{ text: userText }] });
+
+  const body = {
+    system_instruction: { parts: [{ text: sysPrompt }] },
+    contents: conv,
+    generationConfig: { temperature: 0.3, maxOutputTokens: 1024 }
+  };
+
+  const r = await fetch(GEMINI_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  const data = await r.json();
+  if (!r.ok) {
+    const errMsg = data.error?.message || `HTTP ${r.status}`;
+    // Roll back the user message from conv on error
+    conv.pop();
+    throw new Error(errMsg);
+  }
+
+  const reply = data.candidates[0].content.parts[0].text;
+  conv.push({ role: "model", parts: [{ text: reply }] });
+  return reply;
+}
+
+/* ── chat UI ── */
 const scroll=document.getElementById("scroll"),form=document.getElementById("form"),
       input=document.getElementById("input"),send=document.getElementById("send"),
       chipsEl=document.getElementById("chips");
@@ -288,27 +345,65 @@ function formatResponse(results,text){
   return reply+cards;
 }
 
+form.addEventListener("submit",e=>{e.preventDefault();handleQuestion(input.value)});
+
+const STARTERS=["What do you have for dogs?","How much is a cat vaccination?","Any current offers?","Do you do dental cleaning?"];
+STARTERS.forEach(s=>{const c=document.createElement("button");c.className="chip";c.type="button";c.textContent=s;c.addEventListener("click",()=>handleQuestion(s));chipsEl.appendChild(c)});
+
 async function handleQuestion(text){
   if(!text.trim())return;
   addUser(text);
   const typing=showTyping();
   input.value="";send.disabled=true;input.disabled=true;
 
-  // Small delay to show typing
-  await new Promise(r=>setTimeout(r,400+Math.random()*300));
+  try {
+    let aiReply = null;
+    let apiError = null;
 
-  const results=searchServices(text);
-  const reply=formatResponse(results,text);
+    // Try Gemini AI
+    try {
+      aiReply = await callGemini(text);
+    } catch (e) {
+      apiError = e.message;
+    }
 
-  typing.remove();
-  addBot(reply);
+    typing.remove();
+
+    if (aiReply) {
+      // Format AI reply as markdown-like HTML
+      const html = aiReply
+        .replace(/^## (.+)$/gm, '<h3 style="font-family:Fraunces,serif;font-size:1rem;margin:.6rem 0 .2rem">$1</h3>')
+        .replace(/^### (.+)$/gm, '<h4 style="font-family:Fraunces,serif;font-size:.9rem;margin:.5rem 0 .1rem;color:#e8b04b">$1</h4>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+        .replace(/\n{2,}/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+      addBot(`<p>${html}</p>`);
+    } else {
+      // Fallback: keyword search
+      const results = searchServices(text);
+      const reply = formatResponse(results, text);
+      addBot(reply + (apiError ? `<p style="font-size:.72rem;color:rgba(244,236,217,.5);margin-top:12px">⚡ ${esc(apiError)}</p>` : ""));
+    }
+
+    // Also show matching service cards below the AI answer
+    const results = searchServices(text);
+    if (results.length > 0) {
+      addBot(`<div class="cards" style="margin-top:6px">${results.map(cardHTML).join("")}</div>`);
+    }
+
+  } catch (e) {
+    typing.remove();
+    // Ultimate fallback
+    const results = searchServices(text);
+    const reply = formatResponse(results, text);
+    addBot(reply + `<p style="font-size:.72rem;color:rgba(244,236,217,.5);margin-top:12px">⚡ ${esc(e.message)}</p>`);
+  }
+
   send.disabled=false;input.disabled=false;input.focus();
 }
-
-form.addEventListener("submit",e=>{e.preventDefault();handleQuestion(input.value)});
-
-const STARTERS=["What do you have for dogs?","How much is a cat vaccination?","Any current offers?","Do you do dental cleaning?"];
-STARTERS.forEach(s=>{const c=document.createElement("button");c.className="chip";c.type="button";c.textContent=s;c.addEventListener("click",()=>handleQuestion(s));chipsEl.appendChild(c)});
 
 /* ── init ── */
 (async function init(){
