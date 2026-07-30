@@ -143,61 +143,23 @@ async function loadData(){
   }
 }
 
-/* ── Gemini AI config ── */
-/* RESTRICT your API key by HTTP referrer to your GitHub Pages domain in Google AI Studio. */
-const GEMINI_KEY = "PASTE_YOUR_GEMINI_API_KEY_HERE";
-const GEMINI_MODEL = "gemini-3.1-flash-lite";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`;
+/* ── Backend config ── */
+/* After deploying your backend, set this to your Vercel/Render URL. */
+const BACKEND_URL = "http://localhost:3000/api/chat"; // change after deployment
 
 let conv = []; // conversation history
 
-function buildServiceList() {
-  return services.map(s =>
-    `ID:${s.id} | ${s.name} | ${s.species} | €${s.price} | ${s.duration}min | ${s.category} | ${s.offer ? "OFFER: " + s.offer : ""}`
-  ).join("\n");
-}
-
-function buildSystemPrompt() {
-  return `You are the Meadow Vet Care assistant for a modern Irish veterinary clinic. Answer using ONLY the live services below — never invent prices or services.
-
-SPECIES: dogs, cats, rabbits, small mammals, birds.
-HOURS: Mon-Fri 9am-6pm, Sat 9am-1pm, closed Sundays & Irish public holidays.
-EMERGENCY: 24/7 (services MVC-085 to MVC-089).
-BOOKING: Most require appointment. Walk-in: microchipping, nail clipping, flea/tick/worm plans, emergencies.
-
-LIVE SERVICES (${services.length}):
-${buildServiceList()}
-
-RULES: Be concise. Include price, duration. If not in data, say "I don't have that in our current list." Be friendly and professional.`;
-}
-
-async function callGemini(userText) {
-  const sysPrompt = buildSystemPrompt();
-  conv.push({ role: "user", parts: [{ text: userText }] });
-
-  const body = {
-    system_instruction: { parts: [{ text: sysPrompt }] },
-    contents: conv,
-    generationConfig: { temperature: 0.3, maxOutputTokens: 1024 }
-  };
-
-  const r = await fetch(GEMINI_URL, {
+async function callBackend(text) {
+  const res = await fetch(BACKEND_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
+    body: JSON.stringify({ message: text, history: conv })
   });
-
-  const data = await r.json();
-  if (!r.ok) {
-    const errMsg = data.error?.message || `HTTP ${r.status}`;
-    // Roll back the user message from conv on error
-    conv.pop();
-    throw new Error(errMsg);
-  }
-
-  const reply = data.candidates[0].content.parts[0].text;
-  conv.push({ role: "model", parts: [{ text: reply }] });
-  return reply;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `Backend returned ${res.status}`);
+  conv.push({ role: "user", parts: [{ text }] });
+  conv.push({ role: "model", parts: [{ text: data.reply }] });
+  return data.reply;
 }
 
 /* ── chat UI ── */
@@ -360,9 +322,9 @@ async function handleQuestion(text){
     let aiReply = null;
     let apiError = null;
 
-    // Try Gemini AI
+    // Try backend (Gemini via server)
     try {
-      aiReply = await callGemini(text);
+      aiReply = await callBackend(text);
     } catch (e) {
       apiError = e.message;
     }
