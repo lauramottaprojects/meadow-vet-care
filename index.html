@@ -22,6 +22,10 @@ h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(1.35rem,3.4vw,2r
 .tagline{font-size:.82rem;color:rgba(244,236,217,.72);margin:.28rem 0 0}
 .live-info{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:.72rem;color:rgba(244,236,217,.72);background:rgba(20,38,28,.5);border:1px solid rgba(244,236,217,.16);padding:6px 11px;border-radius:999px;backdrop-filter:blur(8px);white-space:nowrap}
 .holiday{width:min(760px,100%);font-size:.85rem;color:#12251b;background:linear-gradient(180deg,#e8b04b,#dd9f34);border:1px solid rgba(244,236,217,.3);padding:9px 16px;border-radius:12px;font-weight:600;text-align:center;box-shadow:0 10px 30px -14px rgba(0,0,0,.6);animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+.weather{width:min(760px,100%);font-size:.85rem;color:#12251b;padding:9px 16px;border-radius:12px;font-weight:600;text-align:center;box-shadow:0 10px 30px -14px rgba(0,0,0,.6);animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+.weather.ok{background:linear-gradient(180deg,#7fae74,#6d9c63);border:1px solid rgba(244,236,217,.3)}
+.weather.notice{background:linear-gradient(180deg,#e8b04b,#dd9f34);border:1px solid rgba(244,236,217,.3)}
+.weather.warning{background:linear-gradient(180deg,#e0805a,#cf6f4a);border:1px solid rgba(244,236,217,.3)}
 .dot{width:7px;height:7px;border-radius:50%;background:#e8b04b;box-shadow:0 0 0 0 rgba(232,176,75,.7);animation:pulse 2.4s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,176,75,.6)}70%{box-shadow:0 0 0 8px rgba(232,176,75,0)}100%{box-shadow:0 0 0 0 rgba(232,176,75,0)}}
 .panel{width:min(760px,100%);flex:1;min-height:0;display:flex;flex-direction:column;background:rgba(20,38,28,.52);border:1px solid rgba(244,236,217,.16);border-radius:22px;backdrop-filter:blur(18px) saturate(140%);box-shadow:0 30px 80px -30px rgba(0,0,0,.7),inset 0 1px 0 rgba(244,236,217,.08);overflow:hidden}
@@ -78,6 +82,7 @@ footer b{color:#7fae74;font-weight:600}a{color:#e8b04b;text-decoration:none;bord
   </header>
 
   <div id="holidayBanner" class="holiday" hidden></div>
+  <div id="weatherBanner" class="weather ok" hidden></div>
 
   <section class="panel">
     <div class="scroll" id="scroll"></div>
@@ -121,8 +126,40 @@ addEventListener("resize",sz);sz();
 /* ── data ── */
 const CSV_URL="https://docs.google.com/spreadsheets/d/1JhSODtviGHzXru6Eb5MhfXfVIF5vtJk3pclzzv7j2l4/export?format=csv&gid=1277715587";
 const HOLIDAY_API=(y)=>`https://date.nager.at/api/v3/PublicHolidays/${y}/IE`;
+const WEATHER_URL="https://api.open-meteo.com/v1/forecast?latitude=53.3498&longitude=-6.2603&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&timezone=Europe%2FDublin&forecast_days=1";
 let services=[];
 const holidayNames={};
+
+const WMO={0:["☀️","clear"],1:["🌤","mainly clear"],2:["⛅","partly cloudy"],3:["☁️","overcast"],45:["🌫","foggy"],48:["🌫","foggy"],51:["🌧","drizzle"],53:["🌧","drizzle"],55:["🌧","drizzle"],56:["🌧","freezing drizzle"],57:["🌧","freezing drizzle"],61:["🌧","light rain"],63:["🌧","rain"],65:["🌧","heavy rain"],66:["🌧","freezing rain"],67:["🌧","freezing rain"],71:["❄️","light snow"],73:["❄️","snow"],75:["❄️","heavy snow"],77:["❄️","snow grains"],80:["🌦","rain showers"],81:["🌦","rain showers"],82:["🌦","violent rain showers"],85:["🌨","snow showers"],86:["🌨","snow showers"],95:["⛈","thunderstorm"],96:["⛈","thunderstorm"],99:["⛈","thunderstorm"]};
+
+function weatherVerdict(w){
+  let level="ok",notes=[];
+  if(w.temp>=30){level="warning";notes=["very hot — keep pets inside"]}
+  else if(w.temp>25){level="warning";notes=["too hot to walk — paw-burn & heatstroke risk"]}
+  else if(w.temp>=20){level=level==="ok"?"notice":level;notes.push("warm — keep walks short, carry water")}
+  if(w.temp<=0){if(level==="ok")level="notice";notes.push("freezing — keep walks short")}
+  if(w.wind>=40){if(level==="ok")level="notice";notes.push("very windy — risky for small pets")}
+  if(w.uv>=8){if(level==="ok")level="notice";notes.push("extreme UV — avoid midday walks")}
+  if(w.code>=95){level="warning";notes=["thunderstorm — keep pets inside"]}
+  else if(w.code>=61&&w.code<=67){if(level==="ok")level="notice";notes.unshift("rainy — keep walks short")}
+  const emoji=(WMO[w.code]||["🌤",""])[0];
+  const txt=level==="ok"
+    ? `${emoji} ${w.temp}°C in ${w.location} — good walking weather`
+    : `${emoji} ${w.temp}°C in ${w.location} — ${notes.join(", ")}`;
+  return{level,txt};
+}
+
+async function loadWeather(){
+  try{
+    const r=await fetch(WEATHER_URL);
+    if(!r.ok)return;
+    const d=await r.json(),c=d.current;
+    const w={temp:Math.round(c.temperature_2m),code:c.weather_code,wind:c.wind_speed_10m,uv:c.uv_index,location:"Dublin"};
+    const v=weatherVerdict(w);
+    const el=document.getElementById("weatherBanner");
+    el.textContent=v.txt;el.className="weather "+v.level;el.hidden=false;
+  }catch(e){}
+}
 
 function localDateISO(){
   const d=new Date();
@@ -403,6 +440,7 @@ async function handleQuestion(text){
 (async function init(){
   send.disabled=true;input.disabled=true;
   loadHolidays();
+  loadWeather();
   const ok=await loadData();
   addBot(ok
     ?`<p>Hello, and welcome to <strong>Meadow Vet Care</strong> 🌿 I have <strong>${services.length} services</strong> loaded live from the clinic's list. Ask me about prices, offers, or what's available for your pet!</p>`
