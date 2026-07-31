@@ -7,8 +7,8 @@ const ALLOWED_ORIGINS = [
 const HOLIDAY_API = (year) =>
   `https://date.nager.at/api/v3/PublicHolidays/${year}/IE`;
 
-const WEATHER_URL =
-  "https://api.open-meteo.com/v1/forecast?latitude=53.3498&longitude=-6.2603&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&daily=temperature_2m_max&timezone=Europe%2FDublin&forecast_days=1";
+const WEATHER_URL = (lat, lon) =>
+  `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&daily=temperature_2m_max&timezone=auto&forecast_days=1`;
 
 function weatherLabel(code) {
   if (code <= 1) return "clear";
@@ -23,8 +23,10 @@ function weatherLabel(code) {
   return "unknown";
 }
 
-async function loadWeather() {
-  const res = await fetch(WEATHER_URL);
+async function loadWeather(latitude, longitude, location) {
+  const lat = latitude ?? 53.3498;
+  const lon = longitude ?? -6.2603;
+  const res = await fetch(WEATHER_URL(lat, lon));
   const data = await res.json();
   const c = data.current;
   return {
@@ -38,7 +40,7 @@ async function loadWeather() {
     uv: c.uv_index,
     is_day: c.is_day,
     high_c: data.daily?.temperature_2m_max?.[0],
-    location: "Dublin",
+    location: location || "Dublin",
   };
 }
 
@@ -80,7 +82,7 @@ export default async function handler(req, res) {
     const [csvRes, holidays, weather] = await Promise.all([
       fetch(CSV_URL),
       loadIrishHolidays().catch(() => []),
-      loadWeather().catch(() => null),
+      loadWeather(body.latitude, body.longitude, body.location).catch(() => null),
     ]);
     const csvText = await csvRes.text();
     const lines = csvText.trim().split("\n").slice(1);

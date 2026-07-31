@@ -126,8 +126,10 @@ addEventListener("resize",sz);sz();
 /* ── data ── */
 const CSV_URL="https://docs.google.com/spreadsheets/d/1JhSODtviGHzXru6Eb5MhfXfVIF5vtJk3pclzzv7j2l4/export?format=csv&gid=1277715587";
 const HOLIDAY_API=(y)=>`https://date.nager.at/api/v3/PublicHolidays/${y}/IE`;
-const WEATHER_URL="https://api.open-meteo.com/v1/forecast?latitude=53.3498&longitude=-6.2603&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&timezone=Europe%2FDublin&forecast_days=1";
+const WEATHER_URL=(lat,lon)=>`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&daily=temperature_2m_max&timezone=auto&forecast_days=1`;
+const DUBLIN={lat:"53.3498",lon:"-6.2603",name:"Dublin"};
 let services=[];
+let userLoc=null;
 const holidayNames={};
 
 const WMO={0:["☀️","clear"],1:["🌤","mainly clear"],2:["⛅","partly cloudy"],3:["☁️","overcast"],45:["🌫","foggy"],48:["🌫","foggy"],51:["🌧","drizzle"],53:["🌧","drizzle"],55:["🌧","drizzle"],56:["🌧","freezing drizzle"],57:["🌧","freezing drizzle"],61:["🌧","light rain"],63:["🌧","rain"],65:["🌧","heavy rain"],66:["🌧","freezing rain"],67:["🌧","freezing rain"],71:["❄️","light snow"],73:["❄️","snow"],75:["❄️","heavy snow"],77:["❄️","snow grains"],80:["🌦","rain showers"],81:["🌦","rain showers"],82:["🌦","violent rain showers"],85:["🌨","snow showers"],86:["🌨","snow showers"],95:["⛈","thunderstorm"],96:["⛈","thunderstorm"],99:["⛈","thunderstorm"]};
@@ -149,12 +151,33 @@ function weatherVerdict(w){
   return{level,txt};
 }
 
+function getUserPosition(){
+  return new Promise((resolve)=>{
+    if(!navigator.geolocation)return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      p=>resolve({lat:p.coords.latitude.toFixed(4),lon:p.coords.longitude.toFixed(4)}),
+      ()=>resolve(null),
+      {timeout:8000,maximumAge:600000}
+    );
+  });
+}
+
+async function reverseGeocode(lat,lon){
+  try{
+    const r=await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+    if(!r.ok)return null;
+    const d=await r.json();
+    return d.city||d.locality||d.principalSubdivision||null;
+  }catch(e){return null}
+}
+
 async function loadWeather(){
   try{
-    const r=await fetch(WEATHER_URL);
+    const loc=userLoc||DUBLIN;
+    const r=await fetch(WEATHER_URL(loc.lat,loc.lon));
     if(!r.ok)return;
     const d=await r.json(),c=d.current;
-    const w={temp:Math.round(c.temperature_2m),code:c.weather_code,wind:c.wind_speed_10m,uv:c.uv_index,location:"Dublin"};
+    const w={temp:Math.round(c.temperature_2m),code:c.weather_code,wind:c.wind_speed_10m,uv:c.uv_index,location:loc.name};
     const v=weatherVerdict(w);
     const el=document.getElementById("weatherBanner");
     el.textContent=v.txt;el.className="weather "+v.level;el.hidden=false;
@@ -216,10 +239,16 @@ const BACKEND_URL = "https://meadow-vet-care.vercel.app/api/chat";
 let conv = []; // conversation history
 
 async function callBackend(text) {
+  const payload = { message: text, history: conv };
+  if (userLoc) {
+    payload.latitude = parseFloat(userLoc.lat);
+    payload.longitude = parseFloat(userLoc.lon);
+    payload.location = userLoc.name;
+  }
   const res = await fetch(BACKEND_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, history: conv })
+    body: JSON.stringify(payload)
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `Backend returned ${res.status}`);
@@ -440,7 +469,14 @@ async function handleQuestion(text){
 (async function init(){
   send.disabled=true;input.disabled=true;
   loadHolidays();
-  loadWeather();
+  (async ()=>{
+    const pos=await getUserPosition();
+    if(pos){
+      const name=await reverseGeocode(pos.lat,pos.lon);
+      userLoc={lat:pos.lat,lon:pos.lon,name:name||"your location"};
+    }
+    loadWeather();
+  })();
   const ok=await loadData();
   addBot(ok
     ?`<p>Hello, and welcome to <strong>Meadow Vet Care</strong> 🌿 I have <strong>${services.length} services</strong> loaded live from the clinic's list. Ask me about prices, offers, or what's available for your pet!</p>`

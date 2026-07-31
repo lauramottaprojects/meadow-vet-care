@@ -23,8 +23,11 @@ const CSV_URL =
 const HOLIDAY_API = (year) =>
   `https://date.nager.at/api/v3/PublicHolidays/${year}/IE`;
 
-const WEATHER_URL =
-  "https://api.open-meteo.com/v1/forecast?latitude=53.3498&longitude=-6.2603&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&daily=temperature_2m_max&timezone=Europe%2FDublin&forecast_days=1";
+const WEATHER_LOCATION = process.env.WEATHER_LOCATION || "Dublin";
+const WEATHER_LAT = process.env.WEATHER_LAT ? +process.env.WEATHER_LAT : 53.3498;
+const WEATHER_LON = process.env.WEATHER_LON ? +process.env.WEATHER_LON : -6.2603;
+
+const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&daily=temperature_2m_max&timezone=auto&forecast_days=1`;
 
 const HISTORY_FILE = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -106,7 +109,7 @@ async function loadWeather() {
     uv: c.uv_index,
     is_day: c.is_day,
     high_c: data.daily?.temperature_2m_max?.[0],
-    location: "Dublin",
+    location: WEATHER_LOCATION,
   };
 }
 
