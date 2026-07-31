@@ -21,6 +21,7 @@ header{width:min(760px,100%);display:flex;align-items:center;gap:14px}
 h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(1.35rem,3.4vw,2rem);margin:0;line-height:1;letter-spacing:-.01em}
 .tagline{font-size:.82rem;color:rgba(244,236,217,.72);margin:.28rem 0 0}
 .live-info{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:.72rem;color:rgba(244,236,217,.72);background:rgba(20,38,28,.5);border:1px solid rgba(244,236,217,.16);padding:6px 11px;border-radius:999px;backdrop-filter:blur(8px);white-space:nowrap}
+.holiday{width:min(760px,100%);font-size:.85rem;color:#12251b;background:linear-gradient(180deg,#e8b04b,#dd9f34);border:1px solid rgba(244,236,217,.3);padding:9px 16px;border-radius:12px;font-weight:600;text-align:center;box-shadow:0 10px 30px -14px rgba(0,0,0,.6);animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
 .dot{width:7px;height:7px;border-radius:50%;background:#e8b04b;box-shadow:0 0 0 0 rgba(232,176,75,.7);animation:pulse 2.4s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,176,75,.6)}70%{box-shadow:0 0 0 8px rgba(232,176,75,0)}100%{box-shadow:0 0 0 0 rgba(232,176,75,0)}}
 .panel{width:min(760px,100%);flex:1;min-height:0;display:flex;flex-direction:column;background:rgba(20,38,28,.52);border:1px solid rgba(244,236,217,.16);border-radius:22px;backdrop-filter:blur(18px) saturate(140%);box-shadow:0 30px 80px -30px rgba(0,0,0,.7),inset 0 1px 0 rgba(244,236,217,.08);overflow:hidden}
@@ -76,6 +77,8 @@ footer b{color:#7fae74;font-weight:600}a{color:#e8b04b;text-decoration:none;bord
     <div class="live-info"><span class="dot"></span><span id="liveCount">loading…</span></div>
   </header>
 
+  <div id="holidayBanner" class="holiday" hidden></div>
+
   <section class="panel">
     <div class="scroll" id="scroll"></div>
     <div class="chips" id="chips"></div>
@@ -117,7 +120,33 @@ addEventListener("resize",sz);sz();
 
 /* ── data ── */
 const CSV_URL="https://docs.google.com/spreadsheets/d/1JhSODtviGHzXru6Eb5MhfXfVIF5vtJk3pclzzv7j2l4/export?format=csv&gid=1277715587";
+const HOLIDAY_API=(y)=>`https://date.nager.at/api/v3/PublicHolidays/${y}/IE`;
 let services=[];
+const holidayNames={};
+
+function localDateISO(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+async function loadHolidays(){
+  try{
+    const y=new Date().getFullYear();
+    const [a,b]=await Promise.all([fetch(HOLIDAY_API(y)),fetch(HOLIDAY_API(y+1))]);
+    for(const r of [a,b]){
+      if(!r.ok)continue;
+      const list=await r.json();
+      for(const h of list){if(h.date)holidayNames[h.date]=h.name||h.localName}
+    }
+    const today=localDateISO();
+    const name=holidayNames[today];
+    if(name){
+      const el=document.getElementById("holidayBanner");
+      el.textContent=`🌿 Closed today — ${name}`;
+      el.hidden=false;
+    }
+  }catch(e){}
+}
 
 const SPECIES_MAP={dog:"Dog",dogs:"Dog",cat:"Cat",cats:"Cat",rabbit:"Rabbit",rabbits:"Rabbit",bunny:"Rabbit",bird:"Bird",birds:"Bird","small mammal":"Small mammal","small mammals":"Small mammal","small pet":"Small mammal","guinea pig":"Small mammal","hamster":"Small mammal","rat":"Small mammal"};
 const CAT_MAP={consultation:"Consultation",consult:"Consultation",dental:"Dental",dentist:"Dental",teeth:"Dental",surgery:"Surgery",surgical:"Surgery",operation:"Surgery",operate:"Surgery",vaccination:"Vaccination",vaccine:"Vaccination",vaccinate:"Vaccination",jab:"Vaccination",shot:"Vaccination",microchip:"Microchip & ID",microchipping:"Microchip & ID",chip:"Microchip & ID",passport:"Microchip & ID",grooming:"Grooming",groom:"Grooming",nail:"Grooming",clipping:"Grooming",emergency:"Emergency",urgent:"Emergency",emergencies:"Emergency",preventive:"Preventive",prevent:"Preventive",checkup:"Preventive","check-up":"Preventive","wellness":"Preventive",nutrition:"Nutrition",diet:"Nutrition",weight:"Nutrition",behaviour:"Behaviour",behavior:"Behaviour",training:"Behaviour",diagnostics:"Diagnostics",diagnostic:"Diagnostics",blood:"Diagnostics",xray:"Diagnostics","x-ray":"Diagnostics",ultrasound:"Diagnostics","end-of-life":"End-of-life","end of life":"End-of-life","quality of life":"End-of-life",euthanasia:"End-of-life"};
@@ -373,6 +402,7 @@ async function handleQuestion(text){
 /* ── init ── */
 (async function init(){
   send.disabled=true;input.disabled=true;
+  loadHolidays();
   const ok=await loadData();
   addBot(ok
     ?`<p>Hello, and welcome to <strong>Meadow Vet Care</strong> 🌿 I have <strong>${services.length} services</strong> loaded live from the clinic's list. Ask me about prices, offers, or what's available for your pet!</p>`

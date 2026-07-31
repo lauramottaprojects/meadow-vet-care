@@ -4,6 +4,22 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173",
 ];
 
+const HOLIDAY_API = (year) =>
+  `https://date.nager.at/api/v3/PublicHolidays/${year}/IE`;
+
+async function loadIrishHolidays() {
+  const year = new Date().getFullYear();
+  const res = await fetch(HOLIDAY_API(year));
+  const data = await res.json();
+  return (data || [])
+    .map((h) => ({ date: h.date, name: h.name || h.localName }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function holidayLines(holidays) {
+  return holidays.map((h) => `- ${h.date}: ${h.name}`).join("\n");
+}
+
 export default async function handler(req, res) {
   const origin = req.headers.origin || "";
   const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -26,7 +42,10 @@ export default async function handler(req, res) {
     if (!body?.message) return res.status(400).json({ error: "message field required" });
 
     const CSV_URL = "https://docs.google.com/spreadsheets/d/1JhSODtviGHzXru6Eb5MhfXfVIF5vtJk3pclzzv7j2l4/export?format=csv&gid=1277715587";
-    const csvRes = await fetch(CSV_URL);
+    const [csvRes, holidays] = await Promise.all([
+      fetch(CSV_URL),
+      loadIrishHolidays().catch(() => []),
+    ]);
     const csvText = await csvRes.text();
     const lines = csvText.trim().split("\n").slice(1);
     const services = lines.map(l => { const c = l.split(","); return { id: c[0]?.trim(), category: c[1]?.trim(), species: c[2]?.trim(), price: +c[3] || 0, duration: +c[4] || 0, appointment: c[5]?.trim() === "Yes", availability: c[6]?.trim(), slots: +c[7] || 0, offer: c[8]?.trim(), name: c[9]?.trim() }; }).filter(s => s.id);
@@ -39,10 +58,13 @@ HOURS: Mon-Fri 9am-6pm, Sat 9am-1pm, closed Sundays & Irish public holidays.
 EMERGENCY: 24/7 (MVC-085 to MVC-089).
 BOOKING: Most require appointment. Walk-in: microchipping, nail clipping, flea/tick/worm plans.
 
+IRISH PUBLIC HOLIDAYS (clinic CLOSED all day on these dates):
+${holidayLines(holidays)}
+
 LIVE SERVICES (${services.length}):
 ${serviceLines}
 
-RULES: Be concise. Include price, duration. If not in data, say it's not in the current list. Be friendly and professional.`;
+RULES: Be concise. Include price, duration. If not in data, say it's not in the current list. If asked about opening hours on a specific date, check the holiday list and the weekday before answering — the clinic is closed on Sundays and on every holiday listed above. Be friendly and professional.`;
 
     const contents = (body.history || []).concat([{ role: "user", parts: [{ text: body.message }] }]);
     const geminiRes = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=" + apiKey, {

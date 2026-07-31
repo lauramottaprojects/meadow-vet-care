@@ -20,6 +20,9 @@ const MIN_INTERVAL_MS = Math.ceil(60000 / RATE_LIMIT_RPM); // 4000ms
 const CSV_URL =
   "https://docs.google.com/spreadsheets/d/1JhSODtviGHzXru6Eb5MhfXfVIF5vtJk3pclzzv7j2l4/export?format=csv&gid=1277715587";
 
+const HOLIDAY_API = (year) =>
+  `https://date.nager.at/api/v3/PublicHolidays/${year}/IE`;
+
 const HISTORY_FILE = join(
   dirname(fileURLToPath(import.meta.url)),
   "chat_history.json"
@@ -61,9 +64,20 @@ async function loadServices() {
   }).filter((s) => s.id);
 }
 
+/* ─── load Irish public holidays ─── */
+async function loadIrishHolidays() {
+  const year = new Date().getFullYear();
+  const res = await fetch(HOLIDAY_API(year));
+  const data = await res.json();
+  return (data || [])
+    .map((h) => ({ date: h.date, name: h.name || h.localName }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 /* ─── build system prompt ─── */
-function buildSystemPrompt(services) {
+function buildSystemPrompt(services, holidays) {
   const lines = services.map(s => `- ID:${s.id} | ${s.service_name} | ${s.species} | €${s.price_eur} | ${s.duration_min}min | ${s.category} | ${s.availability} | ${s.requires_appointment ? "appointment" : "walk-in"} | slots:${s.slots_this_week}${s.special_offer ? " | OFFER: " + s.special_offer : ""}`).join("\n");
+  const holidayLines = holidays.map(h => `- ${h.date}: ${h.name}`).join("\n");
 
   return `You are the Meadow Vet Care assistant, working for a modern Irish veterinary clinic in Ireland. Answer customer questions using ONLY the live services data below.
 
@@ -73,6 +87,9 @@ HOURS: Mon-Fri 9am-6pm, Sat 9am-1pm, closed Sundays and Irish public holidays.
 EMERGENCY: 24/7 (services MVC-085 to MVC-089).
 BOOKING: Most require appointment. Walk-in: microchipping, nail clipping, flea/tick/worm plans, emergencies.
 
+IRISH PUBLIC HOLIDAYS (clinic CLOSED all day on these dates):
+${holidayLines}
+
 LIVE SERVICES (94 total):
 ${lines}
 
@@ -81,7 +98,8 @@ RULES:
 2. Include price in euros, duration, and availability.
 3. When listing multiple services, format as a clear list.
 4. If not in data, say "I don't have that in our current services list."
-5. Be friendly and professional.`;
+5. If asked about opening hours on a specific date, check the holiday list and the weekday before answering — the clinic is closed on Sundays and on every holiday listed above.
+6. Be friendly and professional.`;
 }
 
 /* ─── Gemini API call ─── */
@@ -162,16 +180,20 @@ async function main() {
 
   // Load data
   console.log("  📡 Loading services from Google Sheets...");
-  let services;
+  let services, holidays;
   try {
-    services = await loadServices();
-    console.log(`  ✅ ${services.length} services loaded\n`);
+    [services, holidays] = await Promise.all([
+      loadServices(),
+      loadIrishHolidays().catch(() => []),
+    ]);
+    console.log(`  ✅ ${services.length} services loaded`);
+    console.log(`  🌿 ${holidays.length} Irish public holidays loaded\n`);
   } catch (e) {
-    console.error("  ❌ Failed to load services:", e.message);
+    console.error("  ❌ Failed to load data:", e.message);
     process.exit(1);
   }
 
-  const systemPrompt = buildSystemPrompt(services);
+  const systemPrompt = buildSystemPrompt(services, holidays);
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
