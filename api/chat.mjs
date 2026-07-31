@@ -44,6 +44,41 @@ async function loadWeather(latitude, longitude, location) {
   };
 }
 
+const GEOCODE_URL = (name) =>
+  `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=5&language=en&format=json`;
+
+const geoCache = new Map();
+
+async function geocodeIreland(name) {
+  if (geoCache.has(name)) return geoCache.get(name);
+  try {
+    const res = await fetch(GEOCODE_URL(name));
+    const data = await res.json();
+    const hit = (data.results || []).find(
+      (r) => r.country_code === "IE" || r.country === "Ireland"
+    );
+    const found = hit
+      ? { name: hit.name, latitude: hit.latitude, longitude: hit.longitude }
+      : null;
+    geoCache.set(name, found);
+    return found;
+  } catch {
+    geoCache.set(name, null);
+    return null;
+  }
+}
+
+function extractPlaceNames(text) {
+  const places = [];
+  const re =
+    /\b(?:in|at|near|from|around|outside|for|to)\s+(?:the\s+)?([A-Z][A-Za-z'-]*(?:\s+[A-Z][A-Za-z'-]*)*)/g;
+  let m;
+  while ((m = re.exec(text))) {
+    places.push(m[1].replace(/^County\s+/i, ""));
+  }
+  return places;
+}
+
 async function loadIrishHolidays() {
   const year = new Date().getFullYear();
   const res = await fetch(HOLIDAY_API(year));
@@ -79,20 +114,35 @@ export default async function handler(req, res) {
     if (!body?.message) return res.status(400).json({ error: "message field required" });
 
     const CSV_URL = "https://docs.google.com/spreadsheets/d/1JhSODtviGHzXru6Eb5MhfXfVIF5vtJk3pclzzv7j2l4/export?format=csv&gid=1277715587";
-    const [csvRes, holidays, weather] = await Promise.all([
+    const [csvRes, holidays, weather, requestedWeather] = await Promise.all([
       fetch(CSV_URL),
       loadIrishHolidays().catch(() => []),
       loadWeather(body.latitude, body.longitude, body.location).catch(() => null),
+      (async () => {
+        const placeNames = extractPlaceNames(body.message || "");
+        if (!placeNames.length) return null;
+        const geo = await geocodeIreland(placeNames[0]);
+        if (!geo) return null;
+        return loadWeather(geo.latitude, geo.longitude, geo.name).catch(() => null);
+      })(),
     ]);
     const csvText = await csvRes.text();
     const lines = csvText.trim().split("\n").slice(1);
     const services = lines.map(l => { const c = l.split(","); return { id: c[0]?.trim(), category: c[1]?.trim(), species: c[2]?.trim(), price: +c[3] || 0, duration: +c[4] || 0, appointment: c[5]?.trim() === "Yes", availability: c[6]?.trim(), slots: +c[7] || 0, offer: c[8]?.trim(), name: c[9]?.trim() }; }).filter(s => s.id);
     const serviceLines = services.map(s => `ID:${s.id} | ${s.name} | ${s.species} | €${s.price} | ${s.duration}min | ${s.category} | ${s.availability}${s.offer ? " | OFFER: " + s.offer : ""}`).join("\n");
 
-    const weatherBlock = weather
-      ? `CURRENT WEATHER (${weather.location}, fetched ${weather.time}):
-${weather.temp_c}°C air (feels ${weather.feels_c}°C) | ${weather.weather} | humidity ${weather.humidity}% | wind ${weather.wind_kmh} km/h | UV ${weather.uv} | ${weather.is_day ? "daytime" : "night"} | today's high ${weather.high_c}°C`
-      : "CURRENT WEATHER: unavailable right now — say you can't check the live forecast.";
+    const weatherLines = [];
+    if (weather) {
+      weatherLines.push(`CURRENT WEATHER (${weather.location} — visitor's location, fetched ${weather.time}):
+${weather.temp_c}°C air (feels ${weather.feels_c}°C) | ${weather.weather} | humidity ${weather.humidity}% | wind ${weather.wind_kmh} km/h | UV ${weather.uv} | ${weather.is_day ? "daytime" : "night"} | today's high ${weather.high_c}°C`);
+    } else {
+      weatherLines.push("CURRENT WEATHER: unavailable right now — say you can't check the live forecast.");
+    }
+    if (requestedWeather && requestedWeather.location !== weather?.location) {
+      weatherLines.push(`REQUESTED LOCATION WEATHER (${requestedWeather.location}, fetched ${requestedWeather.time}):
+${requestedWeather.temp_c}°C air (feels ${requestedWeather.feels_c}°C) | ${requestedWeather.weather} | humidity ${requestedWeather.humidity}% | wind ${requestedWeather.wind_kmh} km/h | UV ${requestedWeather.uv} | ${requestedWeather.is_day ? "daytime" : "night"} | today's high ${requestedWeather.high_c}°C`);
+    }
+    const weatherBlock = weatherLines.join("\n\n");
 
     const systemInstruction = `You are the Meadow Vet Care assistant for a modern Irish veterinary clinic. Answer using ONLY the live services below.
 
@@ -112,6 +162,7 @@ DOG-WALK PET-SAFETY RULES:
 - Below 0°C, or heavy rain, fog or wind above 40 km/h: keep walks short.
 - Thunderstorm or UV above 8: keep pets inside.
 - When asked things like "is it too hot to walk my dog?", answer using the CURRENT WEATHER and these rules.
+- If the user asks about the weather in a specific town or city (e.g. "is it safe to walk my dog in Sligo?"), base your answer on the REQUESTED LOCATION WEATHER for that place.
 
 LIVE SERVICES (${services.length}):
 ${serviceLines}

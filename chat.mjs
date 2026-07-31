@@ -27,8 +27,6 @@ const WEATHER_LOCATION = process.env.WEATHER_LOCATION || "Dublin";
 const WEATHER_LAT = process.env.WEATHER_LAT ? +process.env.WEATHER_LAT : 53.3498;
 const WEATHER_LON = process.env.WEATHER_LON ? +process.env.WEATHER_LON : -6.2603;
 
-const WEATHER_URL = `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&daily=temperature_2m_max&timezone=auto&forecast_days=1`;
-
 const HISTORY_FILE = join(
   dirname(fileURLToPath(import.meta.url)),
   "chat_history.json"
@@ -94,8 +92,9 @@ function weatherLabel(code) {
   return "unknown";
 }
 
-async function loadWeather() {
-  const res = await fetch(WEATHER_URL);
+async function loadWeatherAt(latitude, longitude, location) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index,is_day&daily=temperature_2m_max&timezone=auto&forecast_days=1`;
+  const res = await fetch(url);
   const data = await res.json();
   const c = data.current;
   return {
@@ -109,18 +108,63 @@ async function loadWeather() {
     uv: c.uv_index,
     is_day: c.is_day,
     high_c: data.daily?.temperature_2m_max?.[0],
-    location: WEATHER_LOCATION,
+    location,
   };
 }
 
+async function loadWeather() {
+  return loadWeatherAt(WEATHER_LAT, WEATHER_LON, WEATHER_LOCATION);
+}
+
+/* ─── geocode an Irish place name mentioned in a message ─── */
+const GEOCODE_URL = (name) =>
+  `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=5&language=en&format=json`;
+
+const geoCache = new Map();
+
+async function geocodeIreland(name) {
+  if (geoCache.has(name)) return geoCache.get(name);
+  try {
+    const res = await fetch(GEOCODE_URL(name));
+    const data = await res.json();
+    const hit = (data.results || []).find(
+      (r) => r.country_code === "IE" || r.country === "Ireland"
+    );
+    const found = hit
+      ? { name: hit.name, latitude: hit.latitude, longitude: hit.longitude }
+      : null;
+    geoCache.set(name, found);
+    return found;
+  } catch {
+    geoCache.set(name, null);
+    return null;
+  }
+}
+
+function extractPlaceNames(text) {
+  const places = [];
+  const re =
+    /\b(?:in|at|near|from|around|outside|for|to)\s+(?:the\s+)?([A-Z][A-Za-z'-]*(?:\s+[A-Z][A-Za-z'-]*)*)/g;
+  let m;
+  while ((m = re.exec(text))) {
+    places.push(m[1].replace(/^County\s+/i, ""));
+  }
+  return places;
+}
+
 /* ─── build system prompt ─── */
-function buildSystemPrompt(services, holidays, weather) {
+function buildSystemPrompt(services, holidays, weather, requestedWeather) {
   const lines = services.map(s => `- ID:${s.id} | ${s.service_name} | ${s.species} | €${s.price_eur} | ${s.duration_min}min | ${s.category} | ${s.availability} | ${s.requires_appointment ? "appointment" : "walk-in"} | slots:${s.slots_this_week}${s.special_offer ? " | OFFER: " + s.special_offer : ""}`).join("\n");
   const holidayLines = holidays.map(h => `- ${h.date}: ${h.name}`).join("\n");
-  const weatherBlock = weather
-    ? `CURRENT WEATHER (${weather.location}, fetched ${weather.time}):
+  const baseBlock = weather
+    ? `CURRENT WEATHER (${weather.location} — visitor's location, fetched ${weather.time}):
 ${weather.temp_c}°C air (feels ${weather.feels_c}°C) | ${weather.weather} | humidity ${weather.humidity}% | wind ${weather.wind_kmh} km/h | UV ${weather.uv} | ${weather.is_day ? "daytime" : "night"} | today's high ${weather.high_c}°C`
     : "CURRENT WEATHER: unavailable right now — say you can't check the live forecast.";
+  const requestedBlock = requestedWeather
+    ? `REQUESTED LOCATION WEATHER (${requestedWeather.location}, fetched ${requestedWeather.time}):
+${requestedWeather.temp_c}°C air (feels ${requestedWeather.feels_c}°C) | ${requestedWeather.weather} | humidity ${requestedWeather.humidity}% | wind ${requestedWeather.wind_kmh} km/h | UV ${requestedWeather.uv} | ${requestedWeather.is_day ? "daytime" : "night"} | today's high ${requestedWeather.high_c}°C`
+    : "";
+  const weatherBlock = [baseBlock, requestedBlock].filter(Boolean).join("\n\n");
 
   return `You are the Meadow Vet Care assistant, working for a modern Irish veterinary clinic in Ireland. Answer customer questions using ONLY the live services data below.
 
@@ -141,6 +185,7 @@ DOG-WALK PET-SAFETY RULES:
 - Below 0°C, or heavy rain, fog or wind above 40 km/h: keep walks short.
 - Thunderstorm or UV above 8: keep pets inside.
 - When asked things like "is it too hot to walk my dog?", answer using the CURRENT WEATHER and these rules.
+- If the user asks about the weather in a specific town or city (e.g. "is it safe to walk my dog in Sligo?"), base your answer on the REQUESTED LOCATION WEATHER for that place.
 
 LIVE SERVICES (94 total):
 ${lines}
@@ -249,7 +294,7 @@ async function main() {
     process.exit(1);
   }
 
-  const systemPrompt = buildSystemPrompt(services, holidays, weather);
+  const baseSystemPrompt = buildSystemPrompt(services, holidays, weather);
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -321,6 +366,17 @@ async function main() {
 
     turnCount++;
     try {
+      let systemPrompt = baseSystemPrompt;
+      const placeNames = extractPlaceNames(input);
+      if (placeNames.length) {
+        const geo = await geocodeIreland(placeNames[0]);
+        if (geo) {
+          const reqW = await loadWeatherAt(geo.latitude, geo.longitude, geo.name).catch(() => null);
+          if (reqW && reqW.location !== weather?.location) {
+            systemPrompt = buildSystemPrompt(services, holidays, weather, reqW);
+          }
+        }
+      }
       const reply = await askGemini(systemPrompt, history, input);
 
       console.log(`  🤖 Meadow assistant > ${reply}\n`);
